@@ -41,7 +41,6 @@ export default function DashboardHome() {
 
   return (
     <div className="flex-1 overflow-auto bg-gradient-to-br from-blue-100 via-pink-100 to-indigo-100 min-h-screen">
-      {/* Header */}
       <div className="bg-gradient-to-r from-blue-400 to-pink-300 px-4 py-16 sm:px-6 lg:px-8 shadow">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
@@ -81,9 +80,7 @@ export default function DashboardHome() {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-12">
-        {/* Stats Cards */}
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
           {[
             {
@@ -152,9 +149,7 @@ export default function DashboardHome() {
           </div>
         </div>
 
-        {/* Two Column Layout */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {/* Recent Activity */}
           <div className="bg-white shadow-lg rounded-xl overflow-hidden">
             <div className="px-6 py-5 border-b border-gray-200">
               <h2 className="text-lg font-semibold text-gray-900">
@@ -174,7 +169,6 @@ export default function DashboardHome() {
             </div>
           </div>
 
-          {/* Quick Links */}
           <ResourceLinks />
         </div>
       </div>

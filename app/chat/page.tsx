@@ -119,7 +119,7 @@ export default function ChatPage() {
           <div className="text-xs text-indigo-400">Online</div>
         </div>
       </div>
-      {/* Messages */}
+      {/* Messages Chat */}
       <div className="flex-1 overflow-y-auto px-6 py-8 bg-indigo-50">
         {messages.map((msg, i) => (
           <div
@@ -143,7 +143,7 @@ export default function ChatPage() {
         ))}
         <div ref={messagesEndRef} />
       </div>
-      {/* Input */}
+      {/* Input Bar */}
       <form
         onSubmit={handleSend}
         className="bg-indigo-50 px-6 py-4 flex items-center gap-3 border-t border-indigo-100"
