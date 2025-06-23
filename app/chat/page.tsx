@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 
 interface Chat {
   id: string;
@@ -13,6 +14,7 @@ export default function ChatPage() {
     []
   );
   const [username, setUsername] = useState<string>("");
+  const router = useRouter();
   const [currentChatId, setCurrentChatId] = useState<string>("default-chat");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [authToken, setAuthToken] = useState<string>("");
@@ -47,6 +49,26 @@ export default function ChatPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  useEffect(() => {
+    if (!authToken) return;
+
+    const sendHeartbeat = () => {
+      fetch("https://web-production-d7d37.up.railway.app/device/heartbeat", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ timestamp: Date.now() }),
+      }).catch(() => {});
+    };
+
+    const interval = setInterval(sendHeartbeat, 30000); // every 30 seconds
+    sendHeartbeat();
+
+    return () => clearInterval(interval);
+  }, [authToken]);
 
   const sendMessage = async (inputText: string) => {
     if (!inputText.trim()) return;
@@ -110,6 +132,12 @@ export default function ChatPage() {
     sendMessage(input);
   };
 
+  const handleRefreshChat = () => {
+    setMessages([
+      { text: `Hello, ${username}! How can I help you?`, sender: "ai" },
+    ]);
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-100 via-pink-100 to-indigo-100">
       {/* Header */}
@@ -118,6 +146,13 @@ export default function ChatPage() {
           <div className="text-2xl font-bold text-indigo-700">AI Assistant</div>
           <div className="text-xs text-indigo-400">Online</div>
         </div>
+        <button
+          type="button"
+          onClick={() => router.push("/home")}
+          className="px-4 py-2 rounded-lg bg-indigo-500 text-white font-semibold shadow hover:bg-indigo-600 transition"
+        >
+          ← Back to Homepage
+        </button>
       </div>
       {/* Messages Chat */}
       <div className="flex-1 overflow-y-auto px-6 py-8 bg-indigo-50">
@@ -164,6 +199,13 @@ export default function ChatPage() {
           Send
         </button>
       </form>
+      <button
+        className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 transition"
+        onClick={handleRefreshChat}
+        type="button"
+      >
+        Refresh Chat
+      </button>
     </div>
   );
 }

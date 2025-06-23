@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -37,6 +37,87 @@ export default function DashboardHome() {
         setUsername("");
       }
     }
+  }, []);
+
+  const [files, setFiles] = useState<{ id: string; filename: string }[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch files on mount
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    fetch("https://web-production-d7d37.up.railway.app/files", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setFiles(data);
+        } else if (data && Array.isArray(data.files)) {
+          setFiles(data.files);
+        } else {
+          setFiles([]);
+        }
+      })
+      .catch(() => setFiles([]));
+  }, []);
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setError(null);
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const token = localStorage.getItem("token");
+    try {
+      await fetch("https://web-production-d7d37.up.railway.app/upload", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          // Do NOT set Content-Type; browser will set it for FormData
+        },
+        body: formData,
+      });
+      // Refresh file list
+      const filesRes = await fetch(
+        "https://web-production-d7d37.up.railway.app/files",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      const filesData = await filesRes.json();
+      setFiles(filesData);
+    } catch {
+      setError("Upload failed");
+    }
+    setUploading(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    const sendHeartbeat = () => {
+      fetch("https://web-production-d7d37.up.railway.app/device/heartbeat", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ timestamp: Date.now() }),
+      });
+    };
+
+    const interval = setInterval(sendHeartbeat, 30000); // Send heartbeat every 30 seconds
+    sendHeartbeat();
+
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -118,34 +199,38 @@ export default function DashboardHome() {
             Quick Actions
           </h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              {
-                icon: <FiMessageSquare size={20} />,
-                title: "New Chat",
-                href: "/chat",
-                color: "bg-blue-200 text-blue-800 hover:bg-blue-300",
-              },
-              {
-                icon: <FiBookOpen size={20} />,
-                title: "Enroll in Course",
-                href: "#",
-                color: "bg-green-200 text-green-800 hover:bg-green-300",
-              },
-              {
-                icon: <FiUpload size={20} />,
-                title: "Upload File",
-                href: "#",
-                color: "bg-purple-200 text-purple-800 hover:bg-purple-300",
-              },
-              {
-                icon: <FiUsers size={20} />,
-                title: "Join Community",
-                href: "#",
-                color: "bg-amber-200 text-amber-800 hover:bg-amber-300",
-              },
-            ].map((action) => (
-              <QuickActionButton key={action.title} {...action} />
-            ))}
+            <QuickActionButton
+              icon={<FiMessageSquare size={20} />}
+              title="New Chat"
+              href="/chat"
+              color="bg-blue-200 text-blue-800 hover:bg-blue-300"
+            />
+            <QuickActionButton
+              icon={<FiBookOpen size={20} />}
+              title="Enroll in Course"
+              href="/courses"
+              color="bg-green-200 text-green-800 hover:bg-green-300"
+            />
+            <QuickActionButton
+              icon={<FiUpload size={20} />}
+              title={uploading ? "Uploading..." : "Upload File"}
+              color="bg-purple-200 text-purple-800 hover:bg-purple-300"
+              onClick={() => fileInputRef.current?.click()} // Only this one has onClick!
+              disabled={uploading}
+            />
+            <input
+              type="file"
+              ref={fileInputRef}
+              style={{ display: "none" }}
+              onChange={handleUpload}
+              accept=".pdf,.txt"
+            />
+            <QuickActionButton
+              icon={<FiUsers size={20} />}
+              title="Join Community"
+              href="/community"
+              color="bg-amber-200 text-amber-800 hover:bg-amber-300"
+            />
           </div>
         </div>
 
